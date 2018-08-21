@@ -1,13 +1,13 @@
 package rtcl
 
 import (
-	"unicode/utf8"
-	"strings"
-	"path/filepath"
-	"runtime"
-	"reflect"
-	"io/ioutil"
 	"fmt"
+	"io/ioutil"
+	"path/filepath"
+	"reflect"
+	"runtime"
+	"strings"
+	"unicode/utf8"
 )
 
 // lex
@@ -15,7 +15,7 @@ import (
 type itemType int
 
 const (
-	itemError            itemType = iota
+	itemError itemType = iota
 	itemCommand
 	itemLineEnd
 	itemBlockLeft
@@ -160,7 +160,7 @@ func funcName(fn interface{}) string {
 }
 
 func Register(name string, namespace string, fns ...transform) {
-	var metaTs, contentTs transforms
+	var _, _ transforms
 	switch name {
 	case SyntaxNameMeta:
 	case SyntaxNameContent:
