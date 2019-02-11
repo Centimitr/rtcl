@@ -1,4 +1,55 @@
-rtcl
+rtcl: wip
+a strcutred text format for document writing
 ===
+author .
+date .
+location .
 
-rtcl is a structured text format, which is clear and extensible. It is designed for personal use, like making class notes.
+rtcl is a simple format to write document.
+
+# section {
+  First paragraph.
+  Still the first paragraph.
+  
+  Second paragraph. 
+  Still the second paragraph. 
+  
+  _ {
+    Third [Paragraph].
+    Still the [third] paragraph. [Link: a link].
+    [img: ]
+    
+    meta {
+      b, i, https://github.com/rtcl/rtcl/edit/master/README, 
+      https://github.com/rtcl/rtcl/edit/master/README,
+    }
+  }
+  
+  - {
+    item1
+    item2
+    item3
+  }
+  
+  [] {
+    item1 .
+    item2 .
+    item3
+  }
+  
+  define {
+    rtcl
+    markup
+    
+    rtcl.go
+    a golang implementation
+  }
+
+  # subsection {
+    Here is the subsection.
+  }
+  
+  # subsection {
+    Here is the second subsection
+  }
+}
