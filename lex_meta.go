@@ -32,6 +32,7 @@ func lexMetaKV(l *lexer) stateFn {
 
 	if l.startWithBlankLine() {
 		l.ignoreLine()
+		l.emit(itemBlankLine)
 		return lexArticleBody(l)
 	}
 	l.untilMatch(' ')

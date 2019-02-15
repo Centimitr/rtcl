@@ -63,6 +63,7 @@ func (l *lexer) run() {
 	for l.state != nil {
 		l.state = l.state(l)
 	}
+	l.items <- item{typ: itemEOF}
 	close(l.items)
 }
 
