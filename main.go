@@ -6,21 +6,25 @@ import (
 	"time"
 )
 
-func ParseFile(filename string) error {
+func ParseFile(filename string) (ast *node, err error) {
 	t := time.Now()
 	content, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return err
+		return
 	}
 	fmt.Println("[Read]", time.Since(t).Nanoseconds(), "ns")
 	fmt.Println()
 
 	t = time.Now()
-	Parse(string(content))
+	ast = Parse(string(content))
 	fmt.Println("[Parse]", time.Since(t).Nanoseconds(), "ns")
-	return nil
+	return
 }
 
 func main() {
-	_ = ParseFile("test.rtcl")
+
+	rtcl, err := NewRTCLFromFile("test.rtcl")
+	check(err)
+
+	rtcl.Print()
 }

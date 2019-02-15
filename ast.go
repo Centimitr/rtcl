@@ -1,5 +1,10 @@
 package main
 
+import (
+	"errors"
+	"strconv"
+)
+
 type node struct {
 	typ     string
 	val     string
@@ -56,4 +61,24 @@ func (t *node) createSibling(typ string) *node {
 func (t *node) setValue(v string) *node {
 	t.ptr.val = v
 	return t
+}
+
+func (t *node) query(typ string, depth int) (*node, error) {
+	var err error
+	for {
+		switch {
+		case t.ptr.typ == typ:
+			break
+		case t.ptr.sibling != nil:
+			t.ptr = t.ptr.sibling
+			continue
+		case t.ptr.child != nil:
+			t.ptr = t.ptr.child
+			continue
+		default:
+			err = errors.New("query: typ not found within depth " + strconv.Itoa(depth) + " : " + typ)
+		}
+		break
+	}
+	return t, err
 }

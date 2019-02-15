@@ -5,8 +5,7 @@ import (
 	"strings"
 )
 
-func Parse(s string) {
-
+func Parse(s string) *node {
 	l := newLexer(s)
 	go l.run()
 
@@ -114,4 +113,6 @@ func Parse(s string) {
 			throw()
 		}
 	}
+	ast.backToRoot()
+	return ast
 }
