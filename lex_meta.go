@@ -37,6 +37,7 @@ func lexMetaKV(l *lexer) stateFn {
 	}
 	l.untilMatch(' ')
 	l.emit(itemMetaKey)
+	l.ignoreWhitespace()
 	l.untilLineEnd()
 	l.emit(itemMetaValue)
 	l.ignoreLineEnd()

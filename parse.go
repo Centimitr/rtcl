@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io/ioutil"
 	"log"
 	"strings"
 )
@@ -115,4 +116,13 @@ func Parse(s string) *node {
 	}
 	ast.backToRoot()
 	return ast
+}
+
+func ParseFile(filename string) (ast *node, err error) {
+	content, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return
+	}
+	ast = Parse(string(content))
+	return
 }

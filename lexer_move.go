@@ -85,6 +85,13 @@ func (l *lexer) ignoreNext() {
 	l.start = l.pos
 }
 
+func (l *lexer) ignoreWhitespace() {
+	if l.peek() == ' ' || l.peek() == '	' {
+		l.next()
+		l.start = l.pos
+	}
+}
+
 func (l *lexer) ignoreLineEnd() {
 	if l.peek() == '\n' {
 		l.next()

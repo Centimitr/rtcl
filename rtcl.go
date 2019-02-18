@@ -6,8 +6,24 @@ type Container struct {
 }
 
 type Meta struct {
-	Args []string
-	KVs  map[string]string
+	Title      string
+	Subtitle   string
+	Arguments  []string
+	Attributes map[string]string
+}
+
+func (m *Meta) addArg(s string) {
+	switch len(m.Arguments) {
+	case 0:
+		m.Title = s
+	case 1:
+		m.Subtitle = s
+	}
+	m.Arguments = append(m.Arguments, s)
+}
+
+func (m *Meta) addAttribute(k string, v string) {
+	m.Attributes[k] = v
 }
 
 type Content struct {
@@ -15,28 +31,10 @@ type Content struct {
 }
 
 type Block struct {
-	Cmd string
+	Command string
 	Content
 }
 
 func (rtcl *Container) Print() {
 	_ = printJson(rtcl)
-}
-
-func NewRTCLFromAST(ast *node) *Container {
-	r := &Container{
-		Meta:    &Meta{},
-		Content: &Content{&Block{}},
-	}
-
-	return r
-}
-
-func NewRTCLFromFile(filename string) (rtcl *Container, err error) {
-	ast, err := ParseFile(filename)
-	if err != nil {
-		return
-	}
-	rtcl = NewRTCLFromAST(ast)
-	return
 }
