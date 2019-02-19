@@ -1,8 +1,12 @@
-package main
+package rtcl
 
-type Container struct {
+type RTCL struct {
 	Meta    *Meta
 	Content *Content
+}
+
+func (rtcl *RTCL) Print() {
+	check(printJSON(rtcl))
 }
 
 type Meta struct {
@@ -27,14 +31,33 @@ func (m *Meta) addAttribute(k string, v string) {
 }
 
 type Content struct {
-	Block *Block
+	Wrapper interface{}
 }
 
 type Block struct {
 	Command string
-	Content
+	//Content  interface{}
+	Children []interface{}
 }
 
-func (rtcl *Container) Print() {
-	_ = printJson(rtcl)
+func (b *Block) AddChild(v interface{}) {
+	b.Children = append(b.Children, v)
+}
+
+func NewContainerFromNode(node *node) *Container {
+	c := &Container{}
+	for _, child := range astChildren(node) {
+		if child.representation != nil {
+			c.Append(child.representation)
+		}
+	}
+	return c
+}
+
+type Container struct {
+	Children []interface{}
+}
+
+func (c *Container) Append(v interface{}) {
+	c.Children = append(c.Children, v)
 }

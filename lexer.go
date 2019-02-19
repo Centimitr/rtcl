@@ -1,4 +1,4 @@
-package main
+package rtcl
 
 import (
 	"strings"
@@ -38,15 +38,46 @@ func (l *lexer) debug(s string) {
 
 // emit
 
-func (l *lexer) emit(t itemType) {
-	l.items <- item{t, l.active()}
+func emit(l *lexer, t itemType, active string) {
+	l.items <- item{t, active}
+	//fmt.Println("emit:", t, active, len(active))
 	l.start = l.pos
+}
+
+func (l *lexer) emit(t itemType) {
+	emit(l, t, l.active())
+}
+
+func (l *lexer) emitWithTrim(t itemType) {
+	emit(l, t, l.trimmedActive())
 }
 
 // content
 
 func (l *lexer) active() string {
 	return l.input[l.start:l.pos]
+}
+
+func (l *lexer) trimmedActive() string {
+	start := l.start
+	pos := l.pos
+	for {
+		switch l.input[start] {
+		case ' ', '	':
+			start++
+			continue
+		}
+		break
+	}
+	for {
+		switch l.input[pos-1] {
+		case ' ', '	':
+			pos--
+			continue
+		}
+		break
+	}
+	return l.input[start:pos]
 }
 
 func (l *lexer) rest() string {

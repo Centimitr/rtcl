@@ -1,4 +1,4 @@
-package main
+package rtcl
 
 func lexArticle(l *lexer) stateFn {
 	return lexArticleMeta(l)

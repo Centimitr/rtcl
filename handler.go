@@ -1,60 +1,58 @@
-package main
-
-import "fmt"
+package rtcl
 
 type Handler struct {
-	Pre  func(*node) bool
-	Post func(*node)
+	Match func(*node) bool
+	Pre   func(*node) bool
+	Post  func(*node)
 }
 
-var defaultHandler = &Handler{Pre: func(node *node) bool {
-	if node.typ != "block" {
-		fmt.Println("unhandle:", node.typ)
+func NewWrapperPost(name string) func(*node) {
+	return func(node *node) {
+		b := &Block{Command: name}
+		for _, child := range astChildren(node) {
+			if child.representation != nil {
+				b.AddChild(child.representation)
+			}
+		}
+		node.representation = b
 	}
-	return true
-}}
+}
+
+var defaultHandler = &Handler{Post: NewWrapperPost(".")}
+
 var omitHandler = &Handler{}
 
-type handlers map[string]*Handler
+type handlers struct {
+	list []*Handler
+}
 
 var Handlers handlers
 
-func (handlers *handlers) Register(typ string, h *Handler) *handlers {
-	if *handlers == nil {
-		*handlers = make(map[string]*Handler)
+func (hs *handlers) Register(h *Handler) *handlers {
+	if h == nil {
+		panic("register: handlers should not be nil")
 	}
 
-	m := *handlers
-	m[typ] = omitHandler
-	if h != nil {
-		m[typ] = h
+	hs.list = append(hs.list, h)
+	return hs
+}
+
+//func alias(node *node) string {
+//	switch node.typ {
+//	case "meta":
+//		return node.typ
+//	case "block":
+//		return strings.Split(node.val, " ")[0]
+//	default:
+//		return "_" + node.typ
+//	}
+//}
+
+func (hs *handlers) Match(node *node) (h *Handler) {
+	for _, h := range hs.list {
+		if h.Match(node) {
+			return h
+		}
 	}
-	return handlers
-}
-
-func (handlers *handlers) RegisterInternal(typ string, h *Handler) *handlers {
-	return handlers.Register("_"+typ, h)
-}
-
-func (handlers *handlers) RegisterMeta(h *Handler) *handlers {
-	return handlers
-}
-
-func alias(node *node) string {
-	switch node.typ {
-	case "meta":
-		return node.typ
-	case "block":
-		return node.val
-	default:
-		return "_" + node.typ
-	}
-}
-
-func (handlers *handlers) Match(node *node) (h *Handler) {
-	h, ok := (*handlers)[alias(node)]
-	if !ok {
-		h = defaultHandler
-	}
-	return h
+	return omitHandler
 }

@@ -1,4 +1,4 @@
-package main
+package rtcl
 
 type itemType string
 
@@ -10,21 +10,13 @@ type item struct {
 const (
 	itemError itemType = "itemError"
 	itemEOF            = "itemEOF"
-	itemBack           = "itemBack"
-	itemBlock          = "itemBlock"
 
-	itemBlockArticle = "itemBlockArticle"
-
-	itemBlockMeta     = "itemBlockMeta"
-	itemBlockMetaArgs = "itemBlockMetaArgs"
-	itemBlockMetaKVs  = "itemBlockMetaKVs"
 	itemMetaArg       = "itemMetaArg"
 	itemMetaSep       = "itemMetaSep"
-	itemMetaKV        = "itemMetaKV"
 	itemMetaKey       = "itemMetaKey"
 	itemMetaValue     = "itemMetaValue"
+	itemMetaItem      = "itemMetaItem"
 
-	//itemBlockBody = "itemBlockBody"
 	itemBlockLeft      = "itemBlockLeft"
 	itemBlockRight     = "itemBlockRight"
 	itemText           = "itemText"

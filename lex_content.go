@@ -1,17 +1,19 @@
-package main
+package rtcl
 
 func lexArticleBody(l *lexer) stateFn {
 	l.trim()
 	return lexBlock(l)
 }
 
-func lexBlock(l *lexer) stateFn {
+func handleBlockStart(l *lexer, ignoreBlankLine bool) (stateFn, bool) {
 	if l.peek() == eof {
-		return nil
+		return nil, true
 	}
 
 	if l.startWithBlankLine() {
-		l.emit(itemBlankLine)
+		if !ignoreBlankLine {
+			l.emit(itemBlankLine)
+		}
 	}
 	l.trim()
 
@@ -20,14 +22,26 @@ func lexBlock(l *lexer) stateFn {
 		l.emit(itemBlockRight)
 		l.ignoreNext()
 		l.ignoreLineEnd()
-		return lexBlock(l)
+		return lexBlock(l), true
 	}
+	return nil, false
+}
+
+func lexBlock(l *lexer) stateFn {
+	if fn, needRtn := handleBlockStart(l, false); needRtn {
+		return fn
+	}
+
 	//	current line if cmd or text
 	if l.untilMatchOrLineEnd('{') {
-		l.emit(itemCmd)
+		metaBlock := l.trimmedActive() == "meta"
+		l.emitWithTrim(itemCmd)
 		l.ignoreNext()
 		l.ignoreLineEnd()
 		l.emit(itemBlockLeft)
+		if metaBlock {
+			return lexMetaItem(l)
+		}
 		return lexBlock(l)
 	}
 	// text line if empty
@@ -37,4 +51,15 @@ func lexBlock(l *lexer) stateFn {
 		l.emit(itemSep)
 	}
 	return lexBlock(l)
+}
+
+func lexMetaItem(l *lexer) stateFn {
+	if fn, needRtn := handleBlockStart(l, true); needRtn {
+		return fn
+	}
+	l.trim()
+	l.untilMatchOrLineEnd(',')
+	l.emitWithTrim(itemMetaItem)
+	l.ignoreNext()
+	return lexMetaItem(l)
 }

@@ -1,4 +1,4 @@
-package main
+package rtcl
 
 import (
 	"io/ioutil"
@@ -61,7 +61,9 @@ func Parse(s string) *node {
 			switch ast.ptr.typ {
 			case "article.meta.kvs":
 				ast.back().createSibling("article.content").
-					createChild("block")
+					createChild("block").
+					createChild("block.command").setValue("_wrapper").
+					back()
 			case "block":
 				ast.createChild("blank").back()
 			default:
@@ -99,6 +101,14 @@ func Parse(s string) *node {
 		case itemBlockRight:
 			switch ast.ptr.typ {
 			case "block":
+				ast.back()
+			default:
+				throw()
+			}
+		case itemMetaItem:
+			switch ast.ptr.typ {
+			case "block":
+				ast.createChild("meta.item").setValue(item.val)
 				ast.back()
 			default:
 				throw()

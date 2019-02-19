@@ -1,8 +1,6 @@
-package main
+package rtcl
 
-import "sync"
-
-func NewRTCLFromFile(filename string) (rtcl *Container, err error) {
+func NewRTCLFromFile(filename string) (rtcl *RTCL, err error) {
 	ast, err := ParseFile(filename)
 	if err != nil {
 		return
@@ -10,11 +8,11 @@ func NewRTCLFromFile(filename string) (rtcl *Container, err error) {
 	return NewRTCLFromAST(ast)
 }
 
-func NewRTCLFromAST(ast *node) (r *Container, err error) {
+func NewRTCLFromAST(ast *node) (r *RTCL, err error) {
 
 	meta := &Meta{Attributes: make(map[string]string)}
-	content := &Content{&Block{}}
-	r = &Container{Meta: meta, Content: content,}
+	content := &Content{}
+	r = &RTCL{Meta: meta, Content: content,}
 
 	if ast.locateFromRoot("article.meta.args", 3) {
 		for _, node := range astChildren(ast.ptr) {
@@ -36,7 +34,9 @@ func NewRTCLFromAST(ast *node) (r *Container, err error) {
 	}
 
 	if ast.locateFromRoot("article.content", 2) {
-		HandleBlock(ast.ptr.child)
+		wrapper := ast.ptr.child
+		HandleBlock(wrapper)
+		content.Wrapper = wrapper.representation
 	}
 
 	return
@@ -47,25 +47,23 @@ func HandleBlock(node *node) {
 		return
 	}
 	h := Handlers.Match(node)
-	var processChildren = true
+
+	var needProcessChildren = true
 
 	if h.Pre != nil {
-		processChildren = h.Pre(node)
+		needProcessChildren = h.Pre(node)
+		h.Pre(node)
 	}
 
-	if processChildren {
-		wg := &sync.WaitGroup{}
+	if needProcessChildren {
 		for _, child := range astChildren(node) {
-			wg.Add(1)
-			go func() {
-				HandleBlock(child)
-				wg.Done()
-			}()
+			HandleBlock(child)
 		}
-		wg.Wait()
 	}
 
 	if h.Post != nil {
 		h.Post(node)
 	}
+
+	//fmt.Println(node.typ, node.representation)
 }

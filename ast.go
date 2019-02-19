@@ -1,4 +1,4 @@
-package main
+package rtcl
 
 type node struct {
 	typ            string

@@ -1,4 +1,4 @@
-package main
+package rtcl
 
 import (
 	"unicode/utf8"
@@ -69,7 +69,7 @@ func (l *lexer) untilMatchLine(s string) {
 func (l *lexer) trim() {
 	for {
 		switch l.peek() {
-		case ' ', '\n':
+		case ' ', '	', '\n':
 			l.next()
 		case eof:
 			return
