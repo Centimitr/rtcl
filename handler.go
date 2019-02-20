@@ -8,25 +8,14 @@ type Handler struct {
 	Handle HandleFn
 }
 
-func NewWrapperPost(name string) func(*node) {
-	return func(node *node) {
-		b := &Block{Command: name}
-		for _, child := range astChildren(node) {
-			if child.representation != nil {
-				b.AddChild(child.representation)
-			}
-		}
-		node.representation = b
-	}
-}
-
 var omitHandler = &Handler{}
 
 type handlers struct {
-	list []*Handler
+	list           []*Handler
+	blockHandleFns map[string]HandleFn
 }
 
-var Handlers handlers
+var DefaultHandlers handlers
 
 func (hs *handlers) Register(h *Handler) *handlers {
 	if h == nil {
@@ -53,16 +42,13 @@ func (hs *handlers) RegisterType(typ string, fn HandleFn) *handlers {
 	return hs.Register(NewTypeHandler(typ, fn))
 }
 
-//func alias(node *node) string {
-//	switch node.typ {
-//	case "meta":
-//		return node.typ
-//	case "block":
-//		return strings.Split(node.val, " ")[0]
-//	default:
-//		return "_" + node.typ
-//	}
-//}
+func (hs *handlers) RegisterBlockType(typ string, fn HandleFn) *handlers {
+	if hs.blockHandleFns == nil {
+		hs.blockHandleFns = make(map[string]HandleFn)
+	}
+	hs.blockHandleFns[typ] = fn
+	return hs
+}
 
 func (hs *handlers) Match(node *node) (h *Handler) {
 	for _, h := range hs.list {
@@ -71,4 +57,22 @@ func (hs *handlers) Match(node *node) (h *Handler) {
 		}
 	}
 	return omitHandler
+}
+
+func init() {
+	DefaultHandlers.
+		RegisterType("block.command", func(node *node, handleChildren HandleChildrenFn) {
+			node.representation = "WRAPPER TYPE: " + node.val
+		}).
+		RegisterType("block", func(node *node, handleChildren HandleChildrenFn) {
+			if node.child == nil || node.child.typ != "block.command" {
+				return
+			}
+			args := NewArgsFromString(node.child.val)
+			fn := DefaultHandlers.blockHandleFns[args.First]
+
+			if fn != nil {
+				fn(node, handleChildren)
+			}
+		})
 }

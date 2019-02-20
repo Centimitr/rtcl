@@ -52,7 +52,7 @@ func HandleBlock(node *node) {
 		}
 	}
 
-	h := Handlers.Match(node)
+	h := DefaultHandlers.Match(node)
 
 	if h.Handle != nil {
 		h.Handle(node, handleChildren)
