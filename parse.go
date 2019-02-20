@@ -24,10 +24,10 @@ func Parse(s string) *node {
 			case "root":
 				ast.createChild("article").
 					createChild("article.meta").
-					createChild("article.meta.args").
+					createChild("article.meta.Args").
 					createChild("meta.arg").setValue(item.val).
 					back()
-			case "article.meta.args":
+			case "article.meta.Args":
 				ast.createChild("meta.arg").
 					setValue(item.val).
 					back()
@@ -36,7 +36,7 @@ func Parse(s string) *node {
 			}
 		case itemMetaSep:
 			switch ast.ptr.typ {
-			case "article.meta.args":
+			case "article.meta.Args":
 				ast.createSibling("article.meta.kvs")
 			default:
 				throw()

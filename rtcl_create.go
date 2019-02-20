@@ -13,7 +13,7 @@ func NewRTCLFromAST(ast *node) (r *RTCL, err error) {
 	meta := &Meta{Attributes: make(map[string]string)}
 	r = &RTCL{Meta: meta,}
 
-	if ast.locateFromRoot("article.meta.args", 3) {
+	if ast.locateFromRoot("article.meta.Args", 3) {
 		for _, node := range astChildren(ast.ptr) {
 			meta.addArg(node.val)
 		}

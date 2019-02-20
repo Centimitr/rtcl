@@ -1,5 +1,10 @@
 package rtcl
 
+import (
+	"fmt"
+	"strings"
+)
+
 type Section struct {
 	*Container
 	Name string
@@ -35,34 +40,33 @@ func init() {
 				if node.child == nil || node.child.typ != "block.command" {
 					return
 				}
-				args := newArgs(node.child.val)
-				switch args.first {
+				args := NewArgsFromString(node.child.val)
+				switch args.First {
 				case "_wrapper":
 					node.representation = NewContainerFromNode(node)
 				case "#":
-					node.representation = &Section{Name: args.second, Container: NewContainerFromNode(node)}
+					node.representation = &Section{Name: args.Second, Container: NewContainerFromNode(node)}
 				case "define":
 					//node.representation = &Define{Container: NewContainerFromNode(node)}
 					d := &Define{Dict: make(map[string]string)}
-					var k, v string
 					for _, child := range astChildren(node) {
-						switch child.typ {
-						case "text":
-							switch {
-							case k == "":
-								k = child.val
-							case v == "":
-								v = child.val
-							case v != "":
-								v = v + "\n" + child.val
+						fmt.Println(child.typ)
+						if child.typ == "paragraph" {
+							args := Args{}
+							if p, ok := child.representation.(*Paragraph); ok {
+								for _, v := range p.Sentences {
+									if text, ok := v.(*Text); ok {
+										args.Append(text.String)
+									} else {
+										panic("define: paragraphs in define only accept 'text' type")
+									}
+								}
 							}
-						case "blank":
-							d.Dict[k] = v
-							k = ""
-							v = ""
+							if args.First != "" {
+								d.Dict[args.First] = strings.Join(args.Slice[1:], "\n")
+							}
 						}
 					}
-					d.Dict[k] = v
 					node.representation = d
 				}
 			},
@@ -75,8 +79,8 @@ func init() {
 				return false
 			},
 			Post: func(i *node) {
-				//i.representation = &Text{String: i.val}
-				i.representation = "TEXT: " + i.val
+				i.representation = &Text{String: i.val}
+				//i.representation = "TEXT: " + i.val
 			},
 		}).
 		Register(&Handler{

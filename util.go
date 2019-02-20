@@ -41,26 +41,39 @@ func printJSONInChrome(v interface{}) error {
 	return exec.Command(prefixes[0], append(prefixes[1:], args...)...).Run()
 }
 
-type args struct {
-	vs     []string
-	first  string
-	second string
-	third  string
-	last   string
+type Args struct {
+	Slice  []string
+	First  string
+	Second string
+	Third  string
+	Last   string
 }
 
-func newArgs(s string) *args {
-	a := &args{vs: strings.Split(s, " ")}
-	a.first = a.value(0)
-	a.second = a.value(1)
-	a.third = a.value(2)
-	a.last = a.value(len(a.vs) - 1)
+func NewArgsFromString(s string) *Args {
+	return (&Args{Slice: strings.Split(s, " ")}).Parse()
+}
+
+func NewArgsFromSlice(vs []string) *Args {
+	return (&Args{Slice: vs}).Parse()
+}
+
+func (a *Args) Parse() *Args {
+	a.First = a.Value(0)
+	a.Second = a.Value(1)
+	a.Third = a.Value(2)
+	a.Last = a.Value(len(a.Slice) - 1)
 	return a
 }
 
-func (a *args) value(index int) string {
-	if index >= len(a.vs) {
+func (a *Args) Append(s string) *Args {
+	a.Slice = append(a.Slice, s)
+	a.Parse()
+	return a
+}
+
+func (a *Args) Value(index int) string {
+	if index >= len(a.Slice) {
 		return ""
 	}
-	return a.vs[index]
+	return a.Slice[index]
 }
