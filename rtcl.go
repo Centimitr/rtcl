@@ -2,7 +2,7 @@ package rtcl
 
 type RTCL struct {
 	Meta    *Meta
-	Content *Content
+	Content interface{}
 }
 
 func (rtcl *RTCL) Print() {

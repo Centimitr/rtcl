@@ -48,7 +48,7 @@ func lexBlock(l *lexer) stateFn {
 	if l.active() != "" {
 		l.emit(itemText)
 		l.ignoreLineEnd()
-		l.emit(itemSep)
+		//l.emit(itemSep)
 	}
 	return lexBlock(l)
 }

@@ -11,8 +11,7 @@ func NewRTCLFromFile(filename string) (rtcl *RTCL, err error) {
 func NewRTCLFromAST(ast *node) (r *RTCL, err error) {
 
 	meta := &Meta{Attributes: make(map[string]string)}
-	content := &Content{}
-	r = &RTCL{Meta: meta, Content: content,}
+	r = &RTCL{Meta: meta,}
 
 	if ast.locateFromRoot("article.meta.args", 3) {
 		for _, node := range astChildren(ast.ptr) {
@@ -36,7 +35,7 @@ func NewRTCLFromAST(ast *node) (r *RTCL, err error) {
 	if ast.locateFromRoot("article.content", 2) {
 		wrapper := ast.ptr.child
 		HandleBlock(wrapper)
-		content.Wrapper = wrapper.representation
+		r.Content = wrapper.representation
 	}
 
 	return

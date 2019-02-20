@@ -72,17 +72,29 @@ func Parse(s string) *node {
 		case itemText:
 			switch ast.ptr.typ {
 			case "block":
+				child := ast.ptr.child
+				if child != nil {
+					for ; child.sibling != nil; child = child.sibling {
+					}
+				}
+
+				if child != nil && child.typ == "paragraph" {
+					ast.ptr = child
+				} else {
+					ast.createChild("paragraph")
+				}
 				ast.createChild("text").setValue(item.val).back()
+				ast.back()
 			default:
 				throw()
 			}
-		case itemSep:
-			switch ast.ptr.typ {
-			case "block":
-				ast.createChild("sep").back()
-			default:
-				throw()
-			}
+		//case itemSep:
+		//	switch ast.ptr.typ {
+		//	case "block":
+		//		ast.createChild("sep").back()
+		//	default:
+		//		throw()
+		//	}
 		case itemCmd:
 			switch ast.ptr.typ {
 			case "block":

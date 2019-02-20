@@ -20,7 +20,7 @@ const (
 	itemBlockLeft      = "itemBlockLeft"
 	itemBlockRight     = "itemBlockRight"
 	itemText           = "itemText"
-	itemSep            = "itemSep"
+	//itemSep            = "itemSep"
 	itemBlankLine      = "itemBlankLine"
 	itemCmd            = "itemCmd"
 	itemDecoratorLeft  = "itemDecoratorLeft"

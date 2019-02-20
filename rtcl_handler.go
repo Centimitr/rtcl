@@ -1,18 +1,20 @@
 package rtcl
 
-import "fmt"
-
 type Section struct {
 	*Container
 	Name string
 }
 
 type Define struct {
-	*Container
+	Dict map[string]string
 }
 
 type Text struct {
 	String string
+}
+
+type Paragraph struct {
+	Sentences []interface{}
 }
 
 func init() {
@@ -30,7 +32,6 @@ func init() {
 				return i.typ == "block"
 			},
 			Post: func(node *node) {
-				fmt.Println(node.typ, node.val, node.child)
 				if node.child == nil || node.child.typ != "block.command" {
 					return
 				}
@@ -42,7 +43,27 @@ func init() {
 					node.representation = &Section{Name: args.second, Container: NewContainerFromNode(node)}
 				case "define":
 					//node.representation = &Define{Container: NewContainerFromNode(node)}
-					node.representation = "DEFINE"
+					d := &Define{Dict: make(map[string]string)}
+					var k, v string
+					for _, child := range astChildren(node) {
+						switch child.typ {
+						case "text":
+							switch {
+							case k == "":
+								k = child.val
+							case v == "":
+								v = child.val
+							case v != "":
+								v = v + "\n" + child.val
+							}
+						case "blank":
+							d.Dict[k] = v
+							k = ""
+							v = ""
+						}
+					}
+					d.Dict[k] = v
+					node.representation = d
 				}
 			},
 		}).
@@ -56,6 +77,19 @@ func init() {
 			Post: func(i *node) {
 				//i.representation = &Text{String: i.val}
 				i.representation = "TEXT: " + i.val
+			},
+		}).
+		Register(&Handler{
+			Match: func(i *node) bool {
+				return i.typ == "paragraph"
+			},
+			Post: func(i *node) {
+				//i.representation = "SENTENCES: " + strconv.Itoa(len(astChildren(i)))
+				p := &Paragraph{}
+				for _, child := range astChildren(i) {
+					p.Sentences = append(p.Sentences, child.representation)
+				}
+				i.representation = p
 			},
 		})
 }

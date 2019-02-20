@@ -52,8 +52,8 @@ type args struct {
 func newArgs(s string) *args {
 	a := &args{vs: strings.Split(s, " ")}
 	a.first = a.value(0)
-	a.second = a.value(0)
-	a.third = a.value(0)
+	a.second = a.value(1)
+	a.third = a.value(2)
 	a.last = a.value(len(a.vs) - 1)
 	return a
 }

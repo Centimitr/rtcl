@@ -18,8 +18,6 @@ func NewWrapperPost(name string) func(*node) {
 	}
 }
 
-var defaultHandler = &Handler{Post: NewWrapperPost(".")}
-
 var omitHandler = &Handler{}
 
 type handlers struct {
