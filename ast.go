@@ -1,6 +1,6 @@
 package rtcl
 
-import "rtcl/ast"
+import "github.com/rtcl/rtcl/ast"
 
 type node struct {
 	typ     string

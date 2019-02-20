@@ -1,1 +1,1 @@
-module rtcl
+module github.com/rtcl/rtcl

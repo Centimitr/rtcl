@@ -1,9 +1,9 @@
 package rtcl
 
 import (
+	"github.com/rtcl/rtcl/ast"
 	"io/ioutil"
 	"log"
-	"rtcl/ast"
 	"strings"
 )
 

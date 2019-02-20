@@ -1,7 +1,7 @@
 package rtcl
 
 import (
-	"rtcl/ast"
+	"github.com/rtcl/rtcl/ast"
 	"strings"
 )
 
