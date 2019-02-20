@@ -45,23 +45,17 @@ func HandleBlock(node *node) {
 	if node == nil {
 		return
 	}
-	h := Handlers.Match(node)
 
-	var needProcessChildren = true
-
-	if h.Pre != nil {
-		needProcessChildren = h.Pre(node)
-		h.Pre(node)
-	}
-
-	if needProcessChildren {
+	handleChildren := func() {
 		for _, child := range astChildren(node) {
 			HandleBlock(child)
 		}
 	}
 
-	if h.Post != nil {
-		h.Post(node)
+	h := Handlers.Match(node)
+
+	if h.Handle != nil {
+		h.Handle(node, handleChildren)
 	}
 
 	//fmt.Println(node.typ, node.representation)

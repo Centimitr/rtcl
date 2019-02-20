@@ -1,7 +1,6 @@
 package rtcl
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -24,76 +23,55 @@ type Paragraph struct {
 
 func init() {
 	Handlers.
-		Register(&Handler{
-			Match: func(i *node) bool {
-				return i.typ == "block.command"
-			},
-			Post: func(i *node) {
-				i.representation = "WRAPPER TYPE: " + i.val
-			},
+		RegisterType("block.command", func(node *node, handleChildren HandleChildrenFn) {
+			handleChildren()
+			node.representation = "WRAPPER TYPE: " + node.val
 		}).
-		Register(&Handler{
-			Match: func(i *node) bool {
-				return i.typ == "block"
-			},
-			Post: func(node *node) {
-				if node.child == nil || node.child.typ != "block.command" {
-					return
-				}
-				args := NewArgsFromString(node.child.val)
-				switch args.First {
-				case "_wrapper":
-					node.representation = NewContainerFromNode(node)
-				case "#":
-					node.representation = &Section{Name: args.Second, Container: NewContainerFromNode(node)}
-				case "define":
-					//node.representation = &Define{Container: NewContainerFromNode(node)}
-					d := &Define{Dict: make(map[string]string)}
-					for _, child := range astChildren(node) {
-						fmt.Println(child.typ)
-						if child.typ == "paragraph" {
-							args := Args{}
-							if p, ok := child.representation.(*Paragraph); ok {
-								for _, v := range p.Sentences {
-									if text, ok := v.(*Text); ok {
-										args.Append(text.String)
-									} else {
-										panic("define: paragraphs in define only accept 'text' type")
-									}
+		RegisterType("block", func(node *node, handleChildren HandleChildrenFn) {
+			handleChildren()
+			if node.child == nil || node.child.typ != "block.command" {
+				return
+			}
+			args := NewArgsFromString(node.child.val)
+			switch args.First {
+			case "_wrapper":
+				node.representation = NewContainerFromNode(node)
+			case "#":
+				node.representation = &Section{Name: args.Second, Container: NewContainerFromNode(node)}
+			case "define":
+				//node.representation = &Define{Container: NewContainerFromNode(node)}
+				d := &Define{Dict: make(map[string]string)}
+				for _, child := range astChildren(node) {
+					if child.typ == "paragraph" {
+						args := Args{}
+						if p, ok := child.representation.(*Paragraph); ok {
+							for _, v := range p.Sentences {
+								if text, ok := v.(*Text); ok {
+									args.Append(text.String)
+								} else {
+									panic("define: paragraphs in define only accept 'text' type")
 								}
 							}
-							if args.First != "" {
-								d.Dict[args.First] = strings.Join(args.Slice[1:], "\n")
-							}
+						}
+						if args.First != "" {
+							d.Dict[args.First] = strings.Join(args.Slice[1:], "\n")
 						}
 					}
-					node.representation = d
 				}
-			},
+				node.representation = d
+			}
 		}).
-		Register(&Handler{
-			Match: func(i *node) bool {
-				return i.typ == "text"
-			},
-			Pre: func(i *node) bool {
-				return false
-			},
-			Post: func(i *node) {
-				i.representation = &Text{String: i.val}
-				//i.representation = "TEXT: " + i.val
-			},
+		RegisterType("text", func(node *node, handleChildren HandleChildrenFn) {
+			//i.representation = "TEXT: " + i.val
+			node.representation = &Text{String: node.val}
 		}).
-		Register(&Handler{
-			Match: func(i *node) bool {
-				return i.typ == "paragraph"
-			},
-			Post: func(i *node) {
-				//i.representation = "SENTENCES: " + strconv.Itoa(len(astChildren(i)))
-				p := &Paragraph{}
-				for _, child := range astChildren(i) {
-					p.Sentences = append(p.Sentences, child.representation)
-				}
-				i.representation = p
-			},
+		RegisterType("paragraph", func(node *node, handleChildren HandleChildrenFn) {
+			//i.representation = "SENTENCES: " + strconv.Itoa(len(astChildren(i)))
+			handleChildren()
+			p := &Paragraph{}
+			for _, child := range astChildren(node) {
+				p.Sentences = append(p.Sentences, child.representation)
+			}
+			node.representation = p
 		})
 }
