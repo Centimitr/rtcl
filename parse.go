@@ -3,6 +3,7 @@ package rtcl
 import (
 	"io/ioutil"
 	"log"
+	"rtcl/ast"
 	"strings"
 )
 
@@ -10,124 +11,123 @@ func Parse(s string) *node {
 	l := newLexer(s)
 	go l.run()
 
-	var ast = newAST()
+	var cur = newASTCursor(newAST())
+	//cur.onCreate = func() {
+	//	fmt.Println(strings.Repeat("    ", cur.ptr.depth()-1) + cur.ptr.typ)
+	//}
+
 	var item item
 	throw := func() {
-		vs := []string{"node:", ast.ptr.typ, "", "type:", string(item.typ)}
+		vs := []string{"node:", cur.typ, "", "type:", string(item.typ)}
 		panic(strings.Join(vs, " "))
 	}
 
 	for item = range l.items {
 		switch item.typ {
 		case itemMetaArg:
-			switch ast.ptr.typ {
-			case "root":
-				ast.createChild("article").
-					createChild("article.meta").
-					createChild("article.meta.Args").
-					createChild("meta.arg").setValue(item.val).
+			switch cur.typ {
+			case ast.Root:
+				cur.createChild(ast.Article).
+					createChild(ast.ArticleMeta).
+					createChild(ast.ArticleMetaArgs).
+					createChild(ast.MetaArg).setValue(item.val).
 					back()
-			case "article.meta.Args":
-				ast.createChild("meta.arg").
+			case ast.ArticleMetaArgs:
+				cur.createChild(ast.MetaArg).
 					setValue(item.val).
 					back()
 			default:
 				throw()
 			}
 		case itemMetaSep:
-			switch ast.ptr.typ {
-			case "article.meta.Args":
-				ast.createSibling("article.meta.kvs")
+			switch cur.typ {
+			case ast.ArticleMetaArgs:
+				cur.createSibling(ast.ArticleMetaKVs)
 			default:
 				throw()
 			}
 		case itemMetaKey:
-			switch ast.ptr.typ {
-			case "article.meta.kvs":
-				ast.createChild("meta.kv").
-					createChild("meta.key").setValue(item.val)
+			switch cur.typ {
+			case ast.ArticleMetaKVs:
+				cur.createChild(ast.MetaKV).
+					createChild(ast.MetaKey).setValue(item.val)
 			default:
 				throw()
 			}
 		case itemMetaValue:
-			switch ast.ptr.typ {
-			case "meta.key":
-				ast.createSibling("meta.value").setValue(item.val).
+			switch cur.typ {
+			case ast.MetaKey:
+				cur.createSibling(ast.MetaValue).setValue(item.val).
 					back().back()
 			default:
 				throw()
 			}
 		case itemBlankLine:
-			switch ast.ptr.typ {
-			case "article.meta.kvs":
-				ast.back().createSibling("article.content").
-					createChild("block").
-					createChild("block.command").setValue("_wrapper").
+			switch cur.typ {
+			case ast.ArticleMetaKVs:
+				cur.back().createSibling(ast.ArticleContent).
+					createChild(ast.Block).
+					createChild(ast.BlockCommand).setValue(ast.CommandWrapper).
 					back()
-			case "block":
-				ast.createChild("blank").back()
+			case ast.Block:
+				cur.createChild(ast.Blank).back()
 			default:
 				throw()
 			}
 		case itemText:
-			switch ast.ptr.typ {
-			case "block":
-				child := ast.ptr.child
-				if child != nil {
-					for ; child.sibling != nil; child = child.sibling {
-					}
-				}
-
-				if child != nil && child.typ == "paragraph" {
-					ast.ptr = child
+			switch cur.typ {
+			case ast.Block:
+				clone := cur.clone()
+				if clone.gotoLastChild() && clone.typ == ast.Paragraph {
+					cur.set(clone.ptr)
 				} else {
-					ast.createChild("paragraph")
+					cur.createChild(ast.Paragraph)
 				}
-				ast.createChild("text").setValue(item.val).back()
-				ast.back()
+				cur.createChild(ast.Text).setValue(item.val).back()
+				cur.back()
 			default:
 				throw()
 			}
 		//case itemSep:
-		//	switch ast.ptr.typ {
+		//	switch cur.ptr.typ {
 		//	case "block":
-		//		ast.createChild("sep").back()
+		//		cur.createChild("sep").back()
 		//	default:
 		//		throw()
 		//	}
 		case itemCmd:
-			switch ast.ptr.typ {
-			case "block":
-				ast.createChild("block").
-					createChild("block.command").setValue(item.val)
+			switch cur.typ {
+			case ast.Block:
+				cur.createChild(ast.Block).
+					createChild(ast.BlockCommand).setValue(item.val)
 			default:
 				throw()
 			}
 		case itemBlockLeft:
-			switch ast.ptr.typ {
-			case "block.command":
-				ast.back()
+			switch cur.typ {
+			case ast.BlockCommand:
+				cur.back()
 			default:
 				throw()
 			}
 		case itemBlockRight:
-			switch ast.ptr.typ {
-			case "block":
-				ast.back()
+			switch cur.typ {
+			case ast.Block:
+				cur.back()
 			default:
 				throw()
 			}
 		case itemMetaItem:
-			switch ast.ptr.typ {
-			case "block":
-				ast.createChild("meta.item").setValue(item.val)
-				ast.back()
+			switch cur.typ {
+			case ast.Block:
+				cur.createChild(ast.MetaItem).setValue(item.val)
+				cur.back()
 			default:
 				throw()
 			}
 		case itemEOF:
-			ast.back()
-			if !ast.is("article.content") {
+			cur.back()
+			if cur.typ != ast.ArticleContent {
 				log.Println("[Parse]", "EOF at wrong place")
 				throw()
 			}
@@ -136,8 +136,8 @@ func Parse(s string) *node {
 			throw()
 		}
 	}
-	ast.backToRoot()
-	return ast
+	cur.backToRoot()
+	return cur.ptr
 }
 
 func ParseFile(filename string) (ast *node, err error) {

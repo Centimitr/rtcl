@@ -1,106 +1,78 @@
 package rtcl
 
-import (
-	"strings"
-)
+type HandleChildrenFn func()
+type HandleFn func(node *node, handleChildren HandleChildrenFn)
 
-type Section struct {
-	*Container
-	Name string
+type Handler struct {
+	Match  func(node *node) bool
+	Handle HandleFn
 }
 
-type Define struct {
-	Dict map[string]string
+var omitHandler = &Handler{}
+
+type handlers struct {
+	list           []*Handler
+	blockHandleFns map[string]HandleFn
 }
 
-type Text struct {
-	String string
+var DefaultHandlers handlers
+
+func (hs *handlers) Register(h *Handler) *handlers {
+	if h == nil {
+		panic("register: handlers should not be nil")
+	}
+
+	hs.list = append(hs.list, h)
+	return hs
 }
 
-type Paragraph struct {
-	Fragments []interface{}
-	String    string
+func NewTypeHandler(typ string, fn HandleFn) *Handler {
+	if fn == nil {
+		fn = func(node *node, handleChildren HandleChildrenFn) {}
+	}
+	return &Handler{
+		Match: func(node *node) bool {
+			return node.typ == typ
+		},
+		Handle: fn,
+	}
 }
 
-func (p *Paragraph) UpdateString() {
-	var s string
-	sep := " "
-	for _, frag := range p.Fragments {
-		switch v := frag.(type) {
-		case *Text:
-			if s != "" {
-				s += sep
-			}
-			s += v.String
+func (hs *handlers) RegisterType(typ string, fn HandleFn) *handlers {
+	return hs.Register(NewTypeHandler(typ, fn))
+}
+
+func (hs *handlers) RegisterBlockType(typ string, fn HandleFn) *handlers {
+	if hs.blockHandleFns == nil {
+		hs.blockHandleFns = make(map[string]HandleFn)
+	}
+	hs.blockHandleFns[typ] = fn
+	return hs
+}
+
+func (hs *handlers) Match(node *node) (h *Handler) {
+	for _, h := range hs.list {
+		if h.Match(node) {
+			return h
 		}
 	}
-	p.String = s
-}
-
-type List struct {
-	Options string
-}
-
-type TaskList struct {
-	Tasks interface{}
+	return omitHandler
 }
 
 func init() {
 	DefaultHandlers.
-		RegisterType("text", func(node *node, handleChildren HandleChildrenFn) {
-			node.representation = &Text{String: node.val}
+		RegisterType("block.command", func(node *node, handleChildren HandleChildrenFn) {
+			//node.representation = "WRAPPER TYPE: " + node.val
 		}).
-		RegisterType("paragraph", func(node *node, handleChildren HandleChildrenFn) {
-			handleChildren()
-			p := &Paragraph{}
-			for _, child := range astChildren(node) {
-				p.Fragments = append(p.Fragments, child.representation)
+		RegisterType("block", func(node *node, handleChildren HandleChildrenFn) {
+			if node.child == nil || node.child.typ != "block.command" {
+				return
 			}
-			p.UpdateString()
-			node.representation = p
-		}).
-
-		RegisterBlockType("_wrapper", func(node *node, handleChildren HandleChildrenFn) {
-			handleChildren()
-			node.representation = NewContainerFromNode(node)
-		}).
-		RegisterBlockType("#", func(node *node, handleChildren HandleChildrenFn) {
-			handleChildren()
 			args := NewArgsFromString(node.child.val)
-			node.representation = &Section{Name: args.Second, Container: NewContainerFromNode(node)}
-		}).
-		RegisterBlockType("define", func(node *node, handleChildren HandleChildrenFn) {
-			handleChildren()
-			//node.representation = &Define{Container: NewContainerFromNode(node)}
-			d := &Define{Dict: make(map[string]string)}
-			for _, child := range astChildren(node) {
-				if child.typ == "paragraph" {
-					args := Args{}
-					if p, ok := child.representation.(*Paragraph); ok {
-						for _, v := range p.Fragments {
-							if text, ok := v.(*Text); ok {
-								args.Append(text.String)
-							} else {
-								panic("define: paragraphs in define only accept 'text' type")
-							}
-						}
-					}
-					if args.First != "" {
-						d.Dict[args.First] = strings.Join(args.Slice[1:], "\n")
-					}
-				}
-			}
-			node.representation = d
-		}).
+			fn := DefaultHandlers.blockHandleFns[args.First]
 
-		RegisterBlockType("[]", func(node *node, handleChildren HandleChildrenFn) {
-			handleChildren()
-			tl := &TaskList{}
-			node.representation = tl
-		}).
-		RegisterBlockType("-", func(node *node, handleChildren HandleChildrenFn) {
-			handleChildren()
-			l := &List{}
-			node.representation = l
+			if fn != nil {
+				fn(node, handleChildren)
+			}
 		})
 }
