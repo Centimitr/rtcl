@@ -1,5 +1,7 @@
 package rtcl
 
+import "html/template"
+
 type RTCL struct {
 	Meta    *Meta
 	Content interface{}
@@ -7,6 +9,10 @@ type RTCL struct {
 
 func (rtcl *RTCL) Print() {
 	check(printJSON(rtcl))
+}
+
+func (rtcl *RTCL) HTML() template.HTML {
+	return template.HTML(HTML(rtcl.Content))
 }
 
 type Meta struct {
@@ -28,20 +34,6 @@ func (m *Meta) addArg(s string) {
 
 func (m *Meta) addAttribute(k string, v string) {
 	m.Attributes[k] = v
-}
-
-type Content struct {
-	Wrapper interface{}
-}
-
-type Block struct {
-	Command string
-	//Content  interface{}
-	Children []interface{}
-}
-
-func (b *Block) AddChild(v interface{}) {
-	b.Children = append(b.Children, v)
 }
 
 func NewContainerFromNode(node *node) *Container {
