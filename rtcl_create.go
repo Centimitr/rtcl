@@ -1,26 +1,28 @@
 package rtcl
 
+import "github.com/rtcl/rtcl/ast"
+
 func NewRTCLFromFile(filename string) (rtcl *RTCL, err error) {
-	ast, err := ParseFile(filename)
+	root, err := ParseFile(filename)
 	if err != nil {
 		return
 	}
-	return NewRTCLFromAST(ast)
+	return NewRTCLFromAST(root)
 }
 
-func NewRTCLFromAST(ast *node) (r *RTCL, err error) {
-	cur := newASTCursor(ast)
+func NewRTCLFromAST(root *node) (r *RTCL, err error) {
+	cur := newASTCursor(root)
 
 	meta := &Meta{Attributes: make(map[string]string)}
 	r = &RTCL{Meta: meta,}
 
-	if cur.locateFromRoot("article.meta.Args", 3) {
+	if cur.locateFromRoot(ast.ArticleMetaArgs, 3) {
 		for _, child := range cur.ptr.children() {
 			meta.addArg(child.val)
 		}
 	}
 
-	if cur.locateFromRoot("article.meta.kvs", 3) {
+	if cur.locateFromRoot(ast.ArticleMetaKVs, 3) {
 		for _, node := range cur.ptr.children() {
 			var k, v string
 			if node.child != nil {
@@ -33,7 +35,7 @@ func NewRTCLFromAST(ast *node) (r *RTCL, err error) {
 		}
 	}
 
-	if cur.locateFromRoot("article.content", 2) {
+	if cur.locateFromRoot(ast.ArticleContent, 2) {
 		wrapper := cur.ptr.child
 		HandleBlock(wrapper)
 		r.Content = wrapper.representation
@@ -58,6 +60,4 @@ func HandleBlock(node *node) {
 	if h.Handle != nil {
 		h.Handle(node, handleChildren)
 	}
-
-	//fmt.Println(node.typ, node.representation)
 }
