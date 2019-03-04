@@ -12,9 +12,9 @@ func Parse(s string) *node {
 	go l.run()
 
 	var cur = newASTCursor(newAST())
-	//cur.onCreate = func() {
-	//	fmt.Println(strings.Repeat("    ", cur.ptr.depth()-1) + cur.ptr.typ)
-	//}
+	cur.onCreate = func() {
+		println(strings.Repeat("    ", cur.ptr.depth()-1) + cur.ptr.typ)
+	}
 
 	var item item
 	throw := func() {
@@ -125,6 +125,8 @@ func Parse(s string) *node {
 			default:
 				throw()
 			}
+		case itemRaw:
+			cur.createChild(ast.Raw).setValue(item.val).back()
 		case itemEOF:
 			cur.back()
 			if cur.typ != ast.ArticleContent {

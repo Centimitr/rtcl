@@ -19,6 +19,9 @@ func init() {
 			p.UpdateString()
 			node.representation = p
 		}).
+		RegisterType(ast.Raw, func(node *node, handleChildren HandleChildrenFn) {
+			node.representation = &Raw{String: node.val}
+		}).
 
 		RegisterBlockType(ast.CommandWrapper, func(node *node, handleChildren HandleChildrenFn) {
 			handleChildren()

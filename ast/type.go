@@ -19,6 +19,7 @@ const (
 	Blank        = "blank"
 	Paragraph    = "paragraph"
 	Text         = "text"
+	Raw          = "raw"
 
 	CommandWrapper = "_wrapper"
 )

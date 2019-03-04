@@ -1,5 +1,9 @@
 package rtcl
 
+type Raw struct {
+	String string
+}
+
 type Section struct {
 	*Container
 	Name string

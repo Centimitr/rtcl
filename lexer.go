@@ -84,8 +84,16 @@ func (l *lexer) rest() string {
 	return l.input[l.start:]
 }
 
+func (l *lexer) waiting() string {
+	return l.input[l.pos:]
+}
+
 func (l *lexer) startWith(s string) bool {
 	return strings.HasPrefix(l.rest(), s)
+}
+
+func (l *lexer) waitingStartWith(s string) bool {
+	return strings.HasPrefix(l.waiting(), s)
 }
 
 func (l *lexer) startWithLine(s string) bool {

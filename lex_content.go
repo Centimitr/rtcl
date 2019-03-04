@@ -44,6 +44,11 @@ func lexBlock(l *lexer) stateFn {
 		}
 		return lexBlock(l)
 	}
+	if l.startWith("```") {
+		l.ignoreCurrent()
+		return lexRaw(l)
+	}
+
 	// text line if empty
 	if l.active() != "" {
 		l.emit(itemText)
@@ -62,4 +67,11 @@ func lexMetaItem(l *lexer) stateFn {
 	l.emitWithTrim(itemMetaItem)
 	l.ignoreNext()
 	return lexMetaItem(l)
+}
+
+func lexRaw(l *lexer) stateFn {
+	l.untilSeeString("```")
+	l.emit(itemRaw)
+	l.ignoreLine()
+	return lexBlock(l)
 }

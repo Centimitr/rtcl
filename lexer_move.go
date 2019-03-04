@@ -55,6 +55,18 @@ func (l *lexer) untilMatchOrLineEnd(r rune) bool {
 	}
 }
 
+func (l *lexer) untilSeeString(s string) {
+	for {
+		if l.waitingStartWith(s) {
+			println("OK")
+			break
+		}
+		if l.next() == eof {
+			break
+		}
+	}
+}
+
 func (l *lexer) untilMatchLine(s string) {
 	for {
 		if l.startWith(s + "\n") {
@@ -80,27 +92,31 @@ func (l *lexer) trim() {
 	}
 }
 
+func (l *lexer) ignoreCurrent() {
+	l.start = l.pos
+}
+
 func (l *lexer) ignoreNext() {
 	l.next()
-	l.start = l.pos
+	l.ignoreCurrent()
 }
 
 func (l *lexer) ignoreWhitespace() {
 	if l.peek() == ' ' || l.peek() == '	' {
 		l.next()
-		l.start = l.pos
+		l.ignoreCurrent()
 	}
 }
 
 func (l *lexer) ignoreLineEnd() {
 	if l.peek() == '\n' {
 		l.next()
-		l.start = l.pos
+		l.ignoreCurrent()
 	}
 }
 
 func (l *lexer) ignoreLine() {
 	l.untilLineEnd()
 	l.next()
-	l.start = l.pos
+	l.ignoreCurrent()
 }
